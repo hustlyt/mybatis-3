@@ -15,9 +15,13 @@
  */
 package org.apache.ibatis.reflection;
 
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
@@ -217,5 +221,76 @@ public class ReflectorTest {
     ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
     Reflector reflector = reflectorFactory.findForClass(Bean.class);
     assertTrue((Boolean)reflector.getGetInvoker("bool").invoke(new Bean(), new Byte[0]));
+  }
+
+  @Test
+  public void shouldNotAllowTwoNonBooleanGetters() throws Exception {
+    class Bean {
+      // get方法和is方法只允许出现在boolean属性上
+      public Integer isBool() {return 1;}
+      public boolean getBool() {return false;}
+      public void setBool(boolean bool) {}
+    }
+    ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
+    when(reflectorFactory).findForClass(Bean.class);
+    then(caughtException()).isInstanceOf(ReflectionException.class)
+            .hasMessageContaining("Illegal overloaded getter method with ambiguous type for property bool")
+            .hasStackTraceContaining("resolveGetterConflicts");
+  }
+
+  @Test
+  public void testNotValidProperty() throws InvocationTargetException, IllegalAccessException {
+    class Bean {
+      //是不能定义这种方法的
+      public boolean isClass(){return false;}
+      public boolean get$$Test(){return false;}
+      public boolean getSerialVersionUID(){return false;};
+    }
+    ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
+    Reflector reflector = reflectorFactory.findForClass(Bean.class);
+    when(reflector).getGetInvoker("class");
+    then(caughtException()).isInstanceOf(ReflectionException.class)
+            .hasMessageContaining("There is no getter for property named 'class'");
+
+    when(reflector).getGetInvoker("$$Test");
+    then(caughtException()).isInstanceOf(ReflectionException.class)
+            .hasMessageContaining("There is no getter for property named '$$Test'");
+
+    when(reflector).getGetInvoker("serialVersionUID");
+    then(caughtException()).isInstanceOf(ReflectionException.class)
+            .hasMessageContaining("There is no getter for property named 'serialVersionUID'");
+
+  }
+
+  @Test
+  public void testField() throws InvocationTargetException, IllegalAccessException {
+    Field[] fields = Bean2.class.getDeclaredFields();
+    Bean2 obj = new Bean2();
+    for (Field field : fields) {
+      String name = field.getName();
+      if("s".equals(name)){
+        //static类型的字段可以通过反射修改
+        field.set(obj, "1_s");
+      } else if("s2".equals(name)){
+        //final类型的字段可以通过反射修改
+        field.setAccessible(true);
+        field.set(obj, "1_s2");
+      } else if("s3".equals(name)){
+        // static final类型的字段无法通过反射修改，只有classloader可以设置
+        field.setAccessible(true);
+        field.set(obj, "1_s3");
+      }
+    }
+    System.out.println(obj);
+    ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
+    Reflector reflector = reflectorFactory.findForClass(Bean2.class);
+
+    reflector.getSetInvoker("s2").invoke(obj, new Object[]{"fff"});
+  }
+
+  static class Bean2 {
+    static String s = "s";
+    final String s2 = "s2";
+    static final String s3 = "s3";
   }
 }

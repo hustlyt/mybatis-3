@@ -49,6 +49,7 @@ public class GenericTokenParserTest {
         put("last_name", "Kirk");
         put("var{with}brace", "Hiya");
         put("", "");
+        put("James", "oooook");
       }
     }));
 
@@ -74,6 +75,8 @@ public class GenericTokenParserTest {
     assertEquals("Hello ${ this is a test.", parser.parse("Hello ${ this is a test."));
     assertEquals("Hello } this is a test.", parser.parse("Hello } this is a test."));
     assertEquals("Hello } ${ this is a test.", parser.parse("Hello } ${ this is a test."));
+
+    assertEquals("testnull}", parser.parse("test${${first_name}}"));
   }
 
   @Test

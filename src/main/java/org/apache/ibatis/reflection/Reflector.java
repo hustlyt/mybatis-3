@@ -111,6 +111,8 @@ public class Reflector {
         Class<?> winnerType = winner.getReturnType();
         Class<?> candidateType = candidate.getReturnType();
         if (candidateType.equals(winnerType)) {
+          //其实conflictingGetters中已经排除了签名相同的getter方法了，如果签名不同，但是返回值相同，只可能是boolean类型的返回值
+          //参考java beans规范8.3.2节：https://download.oracle.com/otndocs/jcp/7224-javabeans-1.01-fr-spec-oth-JSpec/
           if (!boolean.class.equals(candidateType)) {
             throw new ReflectionException(
                 "Illegal overloaded getter method with ambiguous type for property "
@@ -122,8 +124,11 @@ public class Reflector {
         } else if (candidateType.isAssignableFrom(winnerType)) {
           // OK getter type is descendant
         } else if (winnerType.isAssignableFrom(candidateType)) {
+          //candidateType是winnerType的子类或子接口
           winner = candidate;
         } else {
+          // 两个方法签名不同，但是走到了这里，只可能是这种情况
+          // Integer getBool()和 boolean isBool();
           throw new ReflectionException(
               "Illegal overloaded getter method with ambiguous type for property "
                   + propName + " in class " + winner.getDeclaringClass()
@@ -276,6 +281,7 @@ public class Reflector {
   }
 
   private boolean isValidPropertyName(String name) {
+    //不允许这些属性对应的方法
     return !(name.startsWith("$") || "serialVersionUID".equals(name) || "class".equals(name));
   }
 

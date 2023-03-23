@@ -28,6 +28,12 @@ public final class PropertyNamer {
     // Prevent Instantiation of Static Class
   }
 
+  /**
+   * 根据方法名，获得对应的属性名
+   * 如果是连续两个大写，就不会转换了，比如getAAA或setAAA
+   * @param name 方法名
+   * @return 属性名
+   */
   public static String methodToProperty(String name) {
     if (name.startsWith("is")) {
       name = name.substring(2);

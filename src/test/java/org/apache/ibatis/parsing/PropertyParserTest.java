@@ -33,6 +33,8 @@ public class PropertyParserTest {
     Assertions.assertThat(PropertyParser.parse("${key}", props)).isEqualTo("value");
     Assertions.assertThat(PropertyParser.parse("${key:aaaa}", props)).isEqualTo("value");
     Assertions.assertThat(PropertyParser.parse("SELECT * FROM ${tableName:users} ORDER BY ${orderColumn:id}", props)).isEqualTo("SELECT * FROM members ORDER BY member_id");
+    Assertions.assertThat(PropertyParser.parse("${a}", props)).isEqualTo("${a}");
+    Assertions.assertThat(PropertyParser.parse("${a:b}", props)).isEqualTo("b");
 
     props.setProperty(PropertyParser.KEY_ENABLE_DEFAULT_VALUE, "false");
     Assertions.assertThat(PropertyParser.parse("${a:b}", props)).isEqualTo("c");

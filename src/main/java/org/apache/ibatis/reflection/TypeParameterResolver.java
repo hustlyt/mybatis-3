@@ -26,6 +26,7 @@ import java.lang.reflect.WildcardType;
 import java.util.Arrays;
 
 /**
+ * 参考文章：https://www.jianshu.com/p/423c9a8e4424
  * @author Iwao AVE!
  */
 public class TypeParameterResolver {
